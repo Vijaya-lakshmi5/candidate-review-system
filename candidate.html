@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block title %}{{ 'Edit candidate' if candidate else 'Add candidate' }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="eyebrow">CANDIDATE RECORD</div><h1>{{ 'Edit candidate' if candidate else 'Add candidate' }}</h1><p class="muted">Fields marked * are required.</p></div><a class="btn btn-outline" href="{{ url_for('dashboard') }}">Back</a></div>
+<form method="post" class="panel form-grid"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Candidate ID *<input name="candidate_code" required value="{{ candidate.candidate_code if candidate else '' }}" {% if candidate %}readonly{% endif %}></label>
+  <label>Full name *<input name="full_name" required value="{{ candidate.full_name if candidate else '' }}"></label>
+  <label>Email address *<input type="email" name="email" required value="{{ candidate.email if candidate else '' }}" {% if candidate %}readonly{% endif %}></label>
+  <label>Phone number<input name="phone" value="{{ candidate.phone if candidate else '' }}"></label>
+  <label class="span-2">Assigned task<textarea name="assigned_task" rows="3">{{ candidate.assigned_task if candidate else '' }}</textarea></label>
+  <label>Task status<select name="task_status">{% for s in ['Not Started','In Progress','Completed'] %}<option {% if candidate and candidate.task_status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
+  <label>Task deadline<input type="datetime-local" name="task_deadline" value="{{ candidate.task_deadline.strftime('%Y-%m-%dT%H:%M') if candidate and candidate.task_deadline else '' }}"></label>
+  <label class="span-2">Next assigned task<textarea name="next_task" rows="2">{{ candidate.next_task if candidate else '' }}</textarea></label>
+  <div class="span-2"><button class="btn btn-dark" type="submit">Save candidate</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block title %}Review summary · {{ candidate.full_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="eyebrow">CANDIDATE PORTAL</div><h1>Review summary</h1><p class="muted">Check your feedback and upcoming schedule before logging out.</p></div></div>
+<div class="summary-hero"><div><div class="small muted">CANDIDATE</div><h2>{{ candidate.full_name }}</h2><p>{{ candidate.candidate_code }} · {{ candidate.email }}</p></div><span class="pill">{{ candidate.review_status }}</span></div>
+<div class="summary-grid">
+  <section class="panel"><div class="eyebrow">CURRENT REVIEW</div><h2>{{ candidate.review_result or 'Pending review' }}</h2><p>{{ candidate.reviewer_feedback or 'Reviewer feedback has not been recorded yet.' }}</p></section>
+  <section class="panel"><div class="eyebrow">NEXT SCHEDULE</div><h2>{% if candidate.next_review_at %}{{ candidate.next_review_at.strftime('%d %B %Y') }}{% else %}Not scheduled{% endif %}</h2><p>{% if candidate.next_review_at %}{{ candidate.next_review_at.strftime('%I:%M %p') }}{% else %}The administrator will schedule your next review.{% endif %}</p>{% if candidate.meet_link %}<a class="btn btn-dark" href="{{ candidate.meet_link }}" target="_blank" rel="noopener">Open Google Meet</a>{% endif %}</section>
+  <section class="panel"><div class="eyebrow">TASK DETAILS</div><h2>Current task</h2><p>{{ candidate.assigned_task or 'No task assigned' }}</p><p><strong>Status:</strong> {{ candidate.task_status }}</p><p><strong>Deadline:</strong> {{ candidate.task_deadline.strftime('%d %b %Y, %I:%M %p') if candidate.task_deadline else 'Not set' }}</p></section>
+  <section class="panel"><div class="eyebrow">UP NEXT</div><h2>Next assigned task</h2><p>{{ candidate.next_task or 'No next task assigned yet.' }}</p></section>
+</div>
+<section class="panel"><h2>Review history</h2>{% if reviews %}<div class="table-wrap"><table><thead><tr><th>Date</th><th>Status</th><th>Attendance</th><th>Feedback</th></tr></thead><tbody>{% for r in reviews %}<tr><td>{{ r.start_at.strftime('%d %b %Y, %I:%M %p') }}</td><td>{{ r.status }}</td><td>{{ r.attendance }}</td><td>{{ r.feedback or '—' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="empty">No review history yet.</p>{% endif %}</section>
+<div class="logout-bottom"><p class="muted small">A copy of the summary is sent to your registered email after a review is completed.</p><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-dark" type="submit">Confirm schedule & Logout</button></form></div>
+{% endblock %}

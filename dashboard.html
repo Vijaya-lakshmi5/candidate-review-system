@@ -1,0 +1,46 @@
+{% extends "base.html" %}{% block title %}Admin Dashboard · Candidate Review{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="eyebrow">OVERVIEW</div><h1>Review dashboard</h1><p class="muted">Manage candidates, tasks, and upcoming review sessions.</p></div><a class="btn btn-dark" href="{{ url_for('candidate_new') }}">+ Add candidate</a></div>
+<div class="stats">
+  {% for label,key in [('Total candidates','total'),('Tasks completed','tasks_done'),('Waiting for review','waiting'),('Reviews completed','reviewed'),('Absent','absent'),('Overdue tasks','overdue')] %}
+  <div class="stat"><span>{{ label }}</span><strong>{{ stats[key] }}</strong></div>
+  {% endfor %}
+</div>
+<section class="panel">
+  <div class="panel-head"><div><h2>Candidates</h2><p class="muted small">Search, update tasks, schedule reviews, or export records.</p></div>
+    <div class="inline-actions"><a class="btn btn-outline" href="{{ url_for('export_candidates') }}">Export Excel</a>
+      <form method="post" action="{{ url_for('import_candidates') }}" enctype="multipart/form-data" class="upload-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="file" name="file" accept=".xlsx,.xls,.csv" required><button class="btn btn-outline" type="submit">Import</button></form>
+    </div>
+  </div>
+  <div class="toolbar"><input id="candidateSearch" placeholder="Search name, ID, email…" aria-label="Search candidates"><select id="statusFilter"><option value="">All task statuses</option><option>Not Started</option><option>In Progress</option><option>Completed</option></select></div>
+  <div class="table-wrap"><table id="candidateTable"><thead><tr><th>Candidate</th><th>Task / status</th><th>Review status</th><th>Next review</th><th>Actions</th></tr></thead><tbody>
+  {% for c in candidates %}
+  <tr data-search="{{ (c.full_name ~ ' ' ~ c.candidate_code ~ ' ' ~ c.email)|lower }}" data-status="{{ c.task_status }}">
+    <td><strong>{{ c.full_name }}</strong><div class="small muted">{{ c.candidate_code }} · {{ c.email }}</div><div class="small muted">{{ c.phone }}</div></td>
+    <td><div class="task-text">{{ c.assigned_task or 'No task assigned' }}</div><span class="pill">{{ c.task_status }}</span></td>
+    <td><span class="pill">{{ c.review_status }}</span><div class="small muted">Attendance: {{ c.attendance_status }}</div></td>
+    <td>{% if c.next_review_at %}{{ c.next_review_at.strftime('%d %b %Y, %I:%M %p') }}{% else %}<span class="muted">Not scheduled</span>{% endif %}{% if c.meet_link %}<div><a href="{{ c.meet_link }}" target="_blank" rel="noopener">Meet link</a></div>{% endif %}</td>
+    <td class="actions">
+      <a class="btn btn-small btn-outline" href="{{ url_for('candidate_edit', candidate_id=c.id) }}">Edit</a>
+      <a class="btn btn-small btn-outline" href="{{ url_for('candidate_portal', candidate_id=c.id) }}">Summary</a>
+      <form method="post" action="{{ url_for('ai_suggestions', candidate_id=c.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-small btn-outline" type="submit">AI draft</button></form>
+      <form method="post" action="{{ url_for('candidate_delete', candidate_id=c.id) }}" onsubmit="return confirm('Delete this candidate and their review records?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-small btn-danger" type="submit">Delete</button></form>
+      <details class="schedule"><summary>Schedule review</summary><form method="post" action="{{ url_for('schedule_review', candidate_id=c.id) }}" class="mini-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>Date and time<input type="datetime-local" name="start_at" required></label>
+        <label>Duration (minutes)<input type="number" name="duration" value="30" min="10" max="120" required></label>
+        <button class="btn btn-dark btn-small" type="submit">Book slot</button>
+      </form></details>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody></table></div>
+</section>
+<section class="panel"><div class="panel-head"><div><h2>Upcoming reviews</h2><p class="muted small">Only scheduled sessions are shown.</p></div></div>
+  {% if upcoming %}<div class="table-wrap"><table><thead><tr><th>Candidate</th><th>Date and time</th><th>Session</th><th>Reviewer action</th></tr></thead><tbody>
+  {% for r in upcoming %}<tr><td>{{ r.candidate.full_name }}<div class="small muted">{{ r.candidate.candidate_code }}</div></td><td>{{ r.start_at.strftime('%d %b %Y, %I:%M %p') }} – {{ r.end_at.strftime('%I:%M %p') }}</td><td>{{ r.status }}{% if r.meet_link %}<div><a href="{{ r.meet_link }}" target="_blank" rel="noopener">Join Meet</a></div>{% endif %}</td><td>
+    <details><summary>Record outcome</summary><form method="post" action="{{ url_for('review_update', review_id=r.id) }}" class="mini-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Result<input name="result" placeholder="e.g. Pass / Needs improvement"></label><label>Feedback<textarea name="feedback" rows="3"></textarea></label><label>Next task<textarea name="next_task" rows="2"></textarea></label><button class="btn btn-dark btn-small" name="action" value="complete">Mark completed</button><button class="btn btn-outline btn-small" name="action" value="absent">Mark absent & reschedule</button><button class="btn btn-danger btn-small" name="action" value="cancel">Cancel</button></form></details>
+  </td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="empty">No upcoming reviews. Schedule a review for a candidate with a completed task.</p>{% endif %}
+</section>
+{% endblock %}

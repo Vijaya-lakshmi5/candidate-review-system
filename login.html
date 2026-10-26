@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block title %}Sign in · Candidate Review{% endblock %}
+{% block content %}
+<section class="login-wrap">
+  <div class="login-card">
+    <div class="eyebrow">CANDIDATE OPERATIONS</div><h1>Welcome back.</h1>
+    <p class="muted">Sign in to manage candidate reviews and schedules.</p>
+    <form method="post" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Email address<input type="email" name="email" required autocomplete="username"></label>
+      <label>Password<input type="password" name="password" required autocomplete="current-password"></label>
+      <button class="btn btn-dark full" type="submit">Sign in</button>
+    </form>
+    <p class="small muted">Admin account is created from your .env settings on first run. Change the initial password before real use.</p>
+  </div>
+</section>
+{% endblock %}
